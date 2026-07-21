@@ -15,7 +15,6 @@ import {
   getBadgeGradient,
   GoalCompletedCelebration
 } from "./components/AnimatedAchievementBadge";
-import { MascotHub } from "./components/MascotHub";
 import { 
   Sparkles, 
   ArrowRight, 
@@ -1471,32 +1470,6 @@ export default function App() {
               Each badge unlocks an exclusive game item for your avatar closet. Complete goals to unlock!
             </p>
 
-            {/* TESTING LABORATORY / DEMO CONTROLLER */}
-            <div className="mb-5 p-3.5 bg-gradient-to-r from-teal-50/70 to-indigo-50/70 border border-neutral-200/60 rounded-xl">
-              <div className="flex items-center gap-1.5 mb-1.5">
-                <Sparkles className="w-4 h-4 text-[#F6A623] animate-pulse" />
-                <span className="text-[10px] font-black uppercase tracking-widest text-neutral-700">Badge Testing Lab</span>
-              </div>
-              <p className="text-[10px] text-neutral-500 leading-tight mb-3">
-                Trigger a premium **live unlock animation sequence** (with radial glow, golden sparkles, and active point counting) for any of our 10 badges!
-              </p>
-              <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-5 gap-1.5">
-                {bd.map(b => (
-                  <button
-                    key={b.id}
-                    onClick={() => triggerLiveBadgeUnlock(b.id)}
-                    className={`px-2 py-1.5 rounded-lg text-[9px] font-black truncate transition-all active:scale-95 text-center ${
-                      b.earned
-                        ? 'bg-neutral-100/80 hover:bg-neutral-200/80 text-neutral-700'
-                        : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm'
-                    }`}
-                  >
-                    {b.earned ? `Replay: ${b.name}` : `Unlock: ${b.name}`}
-                  </button>
-                ))}
-              </div>
-            </div>
-
             {/* Badges Flow Grid */}
             <div className="grid grid-cols-3 sm:grid-cols-4 gap-4">
               {bd.map(b => {
@@ -2531,7 +2504,7 @@ export default function App() {
                 width={62} 
                 height={62} 
                 clipPath={`url(#${uid}clip)`}
-                referrerPolicy="no-referrer"
+                {...{ referrerPolicy: "no-referrer" }}
               />
             </g>
           ) : (
@@ -2808,7 +2781,6 @@ export default function App() {
     { id: 'today', label: 'My Activities', short: 'Today', paths: ['M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z', 'M9 22V12h6v10'] },
     { id: 'challenges', label: 'Challenges', short: 'Challenges', paths: ['M6 9H4.5a2.5 2.5 0 0 1 0-5H6', 'M18 9h1.5a2.5 2.5 0 0 0 0-5H18', 'M4 22h16', 'M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22', 'M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22', 'M18 2H6v7a6 6 0 0 0 12 0V2z'] },
     { id: 'rewards', label: 'Rewards', short: 'Rewards', paths: ['M20 12v10H4V12', 'M2 7h20v5H2z', 'M12 22V7', 'M12 7C10 7 7 4 8.5 3S12 5 12 7z', 'M12 7c2 0 5-3 3.5-4S12 5 12 7z'] },
-    { id: 'mascot', label: 'Meet Mascot', short: 'Mascot', paths: ['M12 2a5 5 0 0 1 5 5v2a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1V7a5 5 0 0 1 5-5z', 'M6 10a4 4 0 0 0-4 4v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a4 4 0 0 0-4-4'] },
     { id: 'messages', label: 'Messages', short: 'Messages', paths: ['M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z'] },
     { id: 'profile', label: 'Profile', short: 'Profile', paths: ['M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2', 'M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z'] },
   ];
@@ -2819,7 +2791,6 @@ export default function App() {
       today: ['Good morning', 'Aarav Sharma'], 
       challenges: ['Keep it going', 'Challenges'], 
       rewards: ['Earn & redeem', 'Rewards'], 
-      mascot: ['Your Campus Companion', 'Mascot Hub'],
       messages: ['Your teachers', 'Messages'], 
       profile: ['Your account', 'Profile'], 
       coach: ['Message your mentor', 'Coach'], 
@@ -2902,12 +2873,6 @@ export default function App() {
                     {section === 'today' && renderTodayPanel(false)}
                     {section === 'challenges' && renderChallengesPanel(false)}
                     {section === 'rewards' && renderRewardsPanel(false)}
-                    {section === 'mascot' && (
-                      <MascotHub 
-                        thrivePoints={thrivePoints} 
-                        setThrivePoints={setThrivePoints} 
-                      />
-                    )}
                     {section === 'messages' && renderMessagesPanel(false)}
                     {section === 'profile' && renderProfilePanel(false)}
                     {section === 'avatar_customize' && renderAvatarCustomizePanel(false)}
@@ -2926,7 +2891,6 @@ export default function App() {
                     today: 'teal',
                     challenges: 'amber',
                     rewards: 'rose',
-                    mascot: 'emerald',
                     messages: 'sapphire',
                     profile: 'amethyst'
                   };
@@ -2972,7 +2936,6 @@ export default function App() {
                       today: 'teal',
                       challenges: 'amber',
                       rewards: 'rose',
-                      mascot: 'emerald',
                       messages: 'sapphire',
                       profile: 'amethyst'
                     };
@@ -3043,12 +3006,6 @@ export default function App() {
                     {section === 'today' && renderTodayPanel(true)}
                     {section === 'challenges' && renderChallengesPanel(true)}
                     {section === 'rewards' && renderRewardsPanel(true)}
-                    {section === 'mascot' && (
-                      <MascotHub 
-                        thrivePoints={thrivePoints} 
-                        setThrivePoints={setThrivePoints} 
-                      />
-                    )}
                     {section === 'messages' && renderMessagesPanel(true)}
                     {section === 'profile' && renderProfilePanel(true)}
                     {section === 'avatar_customize' && renderAvatarCustomizePanel(true)}
@@ -3077,6 +3034,7 @@ export default function App() {
       {showCelebration && celebrationItem && (
         <RewardUnlockCelebration
           item={celebrationItem}
+          isOpen={!!showCelebration}
           onClose={() => setShowCelebration(false)}
           onEquip={() => {
             const cat = celebrationItem.category;
