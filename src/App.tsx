@@ -1471,7 +1471,31 @@ export default function App() {
               Each badge unlocks an exclusive game item for your avatar closet. Complete goals to unlock!
             </p>
 
-
+            {/* TESTING LABORATORY / DEMO CONTROLLER */}
+            <div className="mb-5 p-3.5 bg-gradient-to-r from-teal-50/70 to-indigo-50/70 border border-neutral-200/60 rounded-xl">
+              <div className="flex items-center gap-1.5 mb-1.5">
+                <Sparkles className="w-4 h-4 text-[#F6A623] animate-pulse" />
+                <span className="text-[10px] font-black uppercase tracking-widest text-neutral-700">Badge Testing Lab</span>
+              </div>
+              <p className="text-[10px] text-neutral-500 leading-tight mb-3">
+                Trigger a premium **live unlock animation sequence** (with radial glow, golden sparkles, and active point counting) for any of our 10 badges!
+              </p>
+              <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-5 gap-1.5">
+                {bd.map(b => (
+                  <button
+                    key={b.id}
+                    onClick={() => triggerLiveBadgeUnlock(b.id)}
+                    className={`px-2 py-1.5 rounded-lg text-[9px] font-black truncate transition-all active:scale-95 text-center ${
+                      b.earned
+                        ? 'bg-neutral-100/80 hover:bg-neutral-200/80 text-neutral-700'
+                        : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm'
+                    }`}
+                  >
+                    {b.earned ? `Replay: ${b.name}` : `Unlock: ${b.name}`}
+                  </button>
+                ))}
+              </div>
+            </div>
 
             {/* Badges Flow Grid */}
             <div className="grid grid-cols-3 sm:grid-cols-4 gap-4">
@@ -2507,6 +2531,7 @@ export default function App() {
                 width={62} 
                 height={62} 
                 clipPath={`url(#${uid}clip)`}
+                referrerPolicy="no-referrer"
               />
             </g>
           ) : (
@@ -3052,7 +3077,6 @@ export default function App() {
       {showCelebration && celebrationItem && (
         <RewardUnlockCelebration
           item={celebrationItem}
-          isOpen={showCelebration}
           onClose={() => setShowCelebration(false)}
           onEquip={() => {
             const cat = celebrationItem.category;

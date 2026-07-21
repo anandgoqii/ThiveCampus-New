@@ -323,7 +323,7 @@ export const AnimatedAchievementBadge: React.FC<AnimatedAchievementBadgeProps> =
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
         onClick={onClick}
-        animate={(touchActive ? { scale: 1.04, rotateY: 5 } : floatingYAnimation) as any}
+        animate={touchActive ? { scale: 1.04, rotateY: 5 } : floatingYAnimation}
         style={{
           perspective: 1000,
           transformStyle: "preserve-3d",

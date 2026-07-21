@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ThreeAvatarRenderer } from './ThreeAvatarRenderer';
 import { 
   Sparkles, Shield, Flame, Coins, Trophy, Sparkle,
   Lock, Check, ChevronLeft, ChevronRight, RotateCcw, 
@@ -1241,565 +1240,345 @@ interface AvatarClosetProps {
 }
 
 export const AvatarCloset: React.FC<AvatarClosetProps> = ({ stats, onClose, onNavigateToQuest }) => {
-  // Persistence state for 3D customization
-  const [customization, setCustomization] = useState(() => {
-    const saved = localStorage.getItem('thrivecampus_avatar_customization_3d');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {
-        // ignore
-      }
-    }
-    return {
-      skinTone: 'skin-1',
-      hairStyle: 'hair-short',
-      hairColor: 'hair-black',
-      eyeStyle: 'normal',
-      eyeColor: 'black',
-      eyebrows: 'normal',
-      smile: 'happy',
-      faceAccessory: 'none',
-      glasses: 'none',
-      top: 'top-common',
-      jacket: 'none',
-      hoodie: 'none',
-      bottom: 'bottom-jeans',
-      shoes: 'shoes-trainers',
-      socks: 'none',
-      cap: 'none',
-      backpack: 'none',
-      watch: 'none',
-      waterBottle: 'none',
-      rewardAccessory: 'none',
-      activeAnimation: 'Wave',
-    };
+  // Persistence state
+  const [equipped, setEquipped] = useState<EquippedItems>(() => {
+    const saved = localStorage.getItem('thrivecampus_avatar_equipped');
+    return saved ? JSON.parse(saved) : INITIAL_EQUIPPED;
   });
 
-  // Category and sub-category state
-  type MainCategory = 'BODY' | 'HAIR' | 'FACE' | 'CLOTHES' | 'ACCESSORIES' | 'REWARDS' | 'ANIMATIONS';
-  const [activeCategory, setActiveCategory] = useState<MainCategory>('BODY');
-  const [activeSubCategory, setActiveSubCategory] = useState<string>('');
+  const [skinId, setSkinId] = useState(() => {
+    return localStorage.getItem('thrivecampus_avatar_skin') || 'skin-1';
+  });
 
-  // R3F Interactive controls state
+  const [hairColorId, setHairColorId] = useState(() => {
+    return localStorage.getItem('thrivecampus_avatar_haircolor') || 'hair-black';
+  });
+
+  // Current selected Category Tab
+  const [activeTab, setActiveTab] = useState<AvatarCategory>('FACE');
+
+  // Interactive rotation and scale
   const [rotationY, setRotationY] = useState(0);
   const [zoom, setZoom] = useState(1);
+
+  // Celebratory Banner States
   const [celebrationBanner, setCelebrationBanner] = useState<string | null>(null);
-  const [saveSuccess, setSaveSuccess] = useState(false);
 
-  // Sync to local storage
+  // Load all items
+  const items = getAvatarItems(stats);
+
+  // Sync to localstorage
   useEffect(() => {
-    localStorage.setItem('thrivecampus_avatar_customization_3d', JSON.stringify(customization));
-  }, [customization]);
+    localStorage.setItem('thrivecampus_avatar_equipped', JSON.stringify(equipped));
+  }, [equipped]);
 
-  // Set default sub-category when active category shifts
   useEffect(() => {
-    if (activeCategory === 'BODY') setActiveSubCategory('skinTone');
-    else if (activeCategory === 'HAIR') setActiveSubCategory('hairStyle');
-    else if (activeCategory === 'FACE') setActiveSubCategory('eyeStyle');
-    else if (activeCategory === 'CLOTHES') setActiveSubCategory('top');
-    else if (activeCategory === 'ACCESSORIES') setActiveSubCategory('glasses');
-    else if (activeCategory === 'REWARDS') setActiveSubCategory('rewardAccessory');
-    else if (activeCategory === 'ANIMATIONS') setActiveSubCategory('activeAnimation');
-  }, [activeCategory]);
+    localStorage.setItem('thrivecampus_avatar_skin', skinId);
+  }, [skinId]);
 
-  // Check locks dynamically
-  const isItemUnlocked = (req: string) => {
-    if (req.includes('default') || req.includes('Default') || req === '') return true;
-    if (req.includes('Hydration Hero')) return stats.waterCount >= 20;
-    if (req.includes('30-Day Challenge')) return stats.streak >= 30;
-    if (req.includes('Zen Master')) return stats.breathingCount >= 10;
-    if (req.includes('2,500 TP') || req.includes('Gold Tier')) return stats.points >= 2500;
-    if (req.includes('15 study quests') || req.includes('1,500 TP')) return stats.points >= 1500;
-    if (req.includes('1,000 TP')) return stats.points >= 1000;
-    if (req.includes('25 school tasks') || req.includes('25 School Tasks')) return stats.schoolTasksDone >= 25;
-    if (req.includes('5-Day streak') || req.includes('5 daily')) return stats.streak >= 5;
-    if (req.includes('10 Breathing')) return stats.breathingCount >= 10;
-    if (req.includes('15 nights') || req.includes('15')) return stats.sleepHours >= 15;
-    if (req.includes('10 times') || req.includes('10')) return stats.waterCount >= 10;
-    return true;
-  };
+  useEffect(() => {
+    localStorage.setItem('thrivecampus_avatar_haircolor', hairColorId);
+  }, [hairColorId]);
 
-  // Option assets lists
-  const optionsDatabase: Record<string, { id: string; name: string; req: string; value: string; displayColor?: string }[]> = {
-    skinTone: [
-      { id: 'skin-1', name: 'Soft Sand', req: 'Available by default', value: 'skin-1', displayColor: '#f5c69d' },
-      { id: 'skin-2', name: 'Warm Honey', req: 'Available by default', value: 'skin-2', displayColor: '#e0a370' },
-      { id: 'skin-3', name: 'Rich Bronze', req: 'Available by default', value: 'skin-3', displayColor: '#bc804c' },
-      { id: 'skin-4', name: 'Deep Cocoa', req: 'Available by default', value: 'skin-4', displayColor: '#8d5524' },
-      { id: 'skin-5', name: 'Sleek Ebony', req: 'Available by default', value: 'skin-5', displayColor: '#563312' },
-    ],
-    hairStyle: [
-      { id: 'hair-none', name: 'No Hair', req: 'Available by default', value: 'none' },
-      { id: 'hair-short', name: 'Classic Crop', req: 'Available by default', value: 'hair-short' },
-      { id: 'hair-long', name: 'Waves of Flow', req: 'Available by default', value: 'hair-long' },
-      { id: 'hair-spike', name: 'Spiky Trim', req: 'Maintain a 5-Day streak', value: 'hair-spike' },
-      { id: 'hair-bun', name: 'High Top Bun', req: 'Maintain a 5-Day streak', value: 'hair-bun' },
-    ],
-    hairColor: [
-      { id: 'color-black', name: 'Classic Charcoal', req: 'Available by default', value: 'hair-black', displayColor: '#2b2d31' },
-      { id: 'color-brown', name: 'Chestnut Brown', req: 'Available by default', value: 'hair-brown', displayColor: '#593e25' },
-      { id: 'color-blonde', name: 'Golden Amber', req: 'Available by default', value: 'hair-blonde', displayColor: '#e3ad5d' },
-      { id: 'color-red', name: 'Crimson Flame', req: 'Available by default', value: 'hair-red', displayColor: '#b83b27' },
-      { id: 'color-blue', name: 'Cosmic Blue', req: 'Available by default', value: 'hair-blue', displayColor: '#3173e6' },
-    ],
-    eyeStyle: [
-      { id: 'eye-normal', name: 'Default Oval', req: 'Available by default', value: 'normal' },
-      { id: 'eye-cool', name: 'Chill Gaze', req: 'Available by default', value: 'cool' },
-      { id: 'eye-sparkle', name: 'Joyful Starburst', req: 'Complete Zen Master (10 Breathing sessions)', value: 'sparkle' },
-      { id: 'eye-determined', name: 'Fierce Focus', req: 'Reach Gold Tier (2,500 TP)', value: 'determined' },
-    ],
-    eyeColor: [
-      { id: 'eyec-black', name: 'Charcoal Black', req: 'Available by default', value: 'black', displayColor: '#111827' },
-      { id: 'eyec-blue', name: 'Aqua Marine', req: 'Available by default', value: 'blue', displayColor: '#2563eb' },
-      { id: 'eyec-green', name: 'Emerald Shine', req: 'Available by default', value: 'green', displayColor: '#10b981' },
-      { id: 'eyec-purple', name: 'Cosmic Violet', req: 'Available by default', value: 'purple', displayColor: '#8b5cf6' },
-    ],
-    eyebrows: [
-      { id: 'brow-none', name: 'No Eyebrows', req: 'Available by default', value: 'none' },
-      { id: 'brow-normal', name: 'Classic Standard', req: 'Available by default', value: 'normal' },
-      { id: 'brow-thick', name: 'Bold Thick', req: 'Available by default', value: 'thick' },
-      { id: 'brow-thin', name: 'Fine Arch', req: 'Available by default', value: 'thin' },
-      { id: 'brow-angled', name: 'Fierce Angled', req: 'Available by default', value: 'angled' },
-    ],
-    smile: [
-      { id: 'smile-none', name: 'Stoic Neutral', req: 'Available by default', value: 'none' },
-      { id: 'smile-happy', name: 'Cheerful Grin', req: 'Available by default', value: 'happy' },
-      { id: 'smile-cool', name: 'Chill Smirk', req: 'Available by default', value: 'cool' },
-      { id: 'smile-silly', name: 'Playful Tongue', req: 'Available by default', value: 'silly' },
-      { id: 'smile-det', name: 'Confident Smile', req: 'Available by default', value: 'determined' },
-    ],
-    faceAccessory: [
-      { id: 'faceacc-none', name: 'No Face Accessory', req: 'Available by default', value: 'none' },
-      { id: 'faceacc-blush', name: 'Cute Blush Glow', req: 'Available by default', value: 'blush' },
-      { id: 'faceacc-bandaid', name: 'Adhesive Bandaid', req: 'Available by default', value: 'bandaid' },
-    ],
-    top: [
-      { id: 'top-common', name: 'Classic Teal Tee', req: 'Available by default', value: 'top-common' },
-      { id: 'top-aqua', name: 'Aqua Hydration Tee', req: 'Available by default', value: 'top-aqua' },
-      { id: 'top-scholar', name: 'Scholar Blazer', req: 'Complete 25 School Tasks (Scholar)', value: 'top-scholar' },
-      { id: 'top-champion', name: 'Thrive Champion Jacket', req: 'Maintain a 5-Day streak', value: 'top-champion' },
-      { id: 'top-gold', name: 'Gold Thrive Jacket', req: 'Reach Gold Tier (2,500 TP)', value: 'top-gold' },
-    ],
-    jacket: [
-      { id: 'jack-none', name: 'No Jacket', req: 'Available by default', value: 'none' },
-      { id: 'jack-varsity', name: 'Athletic Varsity', req: 'Available by default', value: 'jacket-varsity' },
-      { id: 'jack-leather', name: 'Sleek Black Leather', req: 'Available by default', value: 'jacket-leather' },
-    ],
-    hoodie: [
-      { id: 'hood-none', name: 'No Hoodie', req: 'Available by default', value: 'none' },
-      { id: 'hood-gamer', name: 'Neon Gamer Hoodie', req: 'Available by default', value: 'hoodie-gamer' },
-      { id: 'hood-aqua', name: 'Aqua Fleece Hoodie', req: 'Unlock by earning Hydration Hero', value: 'hoodie-aqua' },
-    ],
-    bottom: [
-      { id: 'bot-jeans', name: 'Comfort Denim Jeans', req: 'Available by default', value: 'bottom-jeans' },
-      { id: 'bot-shorts', name: 'Active Athlete Shorts', req: 'Available by default', value: 'bottom-shorts' },
-      { id: 'bot-scholar', name: 'Sleek School Trousers', req: 'Complete 25 School Tasks (Scholar)', value: 'bottom-scholar' },
-      { id: 'bot-gold', name: 'Gold Trim Sweats', req: 'Reach Gold Tier (2,500 TP)', value: 'bottom-gold' },
-    ],
-    shoes: [
-      { id: 'shoe-trainers', name: 'Sport Runners', req: 'Available by default', value: 'shoes-trainers' },
-      { id: 'shoe-slides', name: 'Turquoise Slides', req: 'Available by default', value: 'shoes-slides' },
-      { id: 'shoe-gold', name: '3D Golden Sneakers', req: 'Reach Gold Tier (2,500 TP)', value: 'shoes-gold' },
-    ],
-    socks: [
-      { id: 'socks-none', name: 'No Socks', req: 'Available by default', value: 'none' },
-      { id: 'socks-crew', name: 'White Crew Socks', req: 'Available by default', value: 'socks-crew' },
-      { id: 'socks-athletic', name: 'Athletic Striped', req: 'Available by default', value: 'socks-athletic' },
-      { id: 'socks-pink', name: 'Pink Ankle Socks', req: 'Available by default', value: 'socks-pink' },
-    ],
-    glasses: [
-      { id: 'glass-none', name: 'No Glasses', req: 'Available by default', value: 'none' },
-      { id: 'glass-specs', name: 'Circular Wireframes', req: 'Available by default', value: 'glasses-specs' },
-      { id: 'glass-happy', name: 'Happy Vibes Shades', req: 'Available by default', value: 'glasses-happy' },
-      { id: 'glass-stars', name: 'Cosmic Star Glasses', req: 'Available by default', value: 'glasses-stars' },
-    ],
-    cap: [
-      { id: 'cap-none', name: 'No Headwear', req: 'Available by default', value: 'none' },
-      { id: 'cap-cap', name: 'Baseball Cap', req: 'Available by default', value: 'cap-cap' },
-      { id: 'cap-beanie', name: 'Pink Ribbed Beanie', req: 'Available by default', value: 'cap-beanie' },
-      { id: 'cap-moon', name: 'Moonlit Cap', req: 'Log sleep 15 nights (Dream Champion)', value: 'cap-moon' },
-    ],
-    backpack: [
-      { id: 'back-none', name: 'No Backpack', req: 'Available by default', value: 'none' },
-      { id: 'back-orange', name: 'Scholar Backpack', req: 'Available by default', value: 'backpack-orange' },
-      { id: 'back-jetpack', name: 'Cosmic Jetpack', req: 'Reach Gold Tier (2,500 TP)', value: 'backpack-jetpack' },
-      { id: 'back-shell', name: 'Turtle Shell', req: 'Available by default', value: 'backpack-shell' },
-    ],
-    watch: [
-      { id: 'watch-none', name: 'No Watch', req: 'Available by default', value: 'none' },
-      { id: 'watch-band', name: 'Neon Active Band', req: 'Available by default', value: 'watch-band' },
-      { id: 'watch-smart', name: 'Sleek Smartwatch', req: 'Available by default', value: 'watch-smart' },
-      { id: 'watch-gold', name: 'Gold Chronometer', req: 'Reach Gold Tier (2,500 TP)', value: 'watch-gold' },
-    ],
-    waterBottle: [
-      { id: 'bottle-none', name: 'No Bottle', req: 'Available by default', value: 'none' },
-      { id: 'bottle-flask', name: 'Hydration Flask', req: 'Available by default', value: 'bottle-flask' },
-      { id: 'bottle-jug', name: 'Gallon Water Jug', req: 'Log water 10 times', value: 'bottle-jug' },
-      { id: 'bottle-sports', name: 'Sports Bottle', req: 'Available by default', value: 'bottle-sports' },
-    ],
-    rewardAccessory: [
-      { id: 'rew-none', name: 'No Reward Accessory', req: 'Available by default', value: 'none' },
-      { id: 'rew-wings', name: 'Angel Wings', req: 'Complete 30-Day Challenge', value: 'reward-wings' },
-      { id: 'rew-sword', name: 'Fire Sword', req: 'Complete 30-Day Challenge', value: 'reward-sword' },
-      { id: 'rew-halo', name: 'Angel Halo', req: 'Unlock by earning Hydration Hero', value: 'reward-halo' },
-      { id: 'rew-pet', name: 'Pet Slime', req: 'Complete Zen Master (10 Breathing sessions)', value: 'reward-pet' },
-    ],
-    activeAnimation: [
-      { id: 'anim-wave', name: 'Wave Greeting', req: 'Available by default', value: 'Wave' },
-      { id: 'anim-celebrate', name: 'Celebrate Jump', req: 'Available by default', value: 'Celebrate' },
-      { id: 'anim-dance', name: 'Dance Groove', req: 'Available by default', value: 'Dance' },
-      { id: 'anim-run', name: 'Jogging Run', req: 'Available by default', value: 'Run' },
-      { id: 'anim-walk', name: 'Casual Walk', req: 'Available by default', value: 'Walk' },
-      { id: 'anim-highfive', name: 'High Five', req: 'Available by default', value: 'High Five' },
-      { id: 'anim-meditate', name: 'Meditate Pose', req: 'Available by default', value: 'Meditate' },
-      { id: 'anim-study', name: 'Desk Writing', req: 'Available by default', value: 'Study' },
-      { id: 'anim-read', name: 'Reading Book', req: 'Available by default', value: 'Read Book' },
-      { id: 'anim-sleep', name: 'Deep Sleep', req: 'Available by default', value: 'Sleep' },
-    ],
-  };
-
-  const handleEquip = (subCat: string, value: string, name: string) => {
-    setCustomization((prev: any) => ({
+  const equipItem = (itemId: string, category: AvatarCategory) => {
+    setEquipped(prev => ({
       ...prev,
-      [subCat]: value,
+      [category]: itemId
     }));
 
-    // Show temporary equipment success feedback
-    setCelebrationBanner(`EQUIPPED: ${name}!`);
-    setTimeout(() => setCelebrationBanner(null), 2500);
+    const itemName = items.find(i => i.id === itemId)?.name || 'Item';
+    setCelebrationBanner(`LOOKING GREAT! ${itemName} equipped.`);
 
-    // Sync back to standard 2D avatar keys so other areas remain updated
-    const legacyEquippedSaved = localStorage.getItem('thrivecampus_avatar_equipped');
-    const legacyEquipped = legacyEquippedSaved ? JSON.parse(legacyEquippedSaved) : INITIAL_EQUIPPED;
-
-    let updated2D = { ...legacyEquipped };
-    if (subCat === 'top') updated2D.TOPS = value;
-    else if (subCat === 'bottom') updated2D.BOTTOMS = value;
-    else if (subCat === 'shoes') updated2D.SHOES = value;
-    else if (subCat === 'glasses') updated2D.GLASSES = value;
-    else if (subCat === 'cap') updated2D.HEADWEAR = value;
-    else if (subCat === 'backpack') updated2D.ACCESSORIES = value;
-
-    localStorage.setItem('thrivecampus_avatar_equipped', JSON.stringify(updated2D));
-
-    if (subCat === 'skinTone') {
-      localStorage.setItem('thrivecampus_avatar_skin', value);
-    }
-    if (subCat === 'hairColor') {
-      localStorage.setItem('thrivecampus_avatar_haircolor', value);
-    }
-  };
-
-  const handleSave = () => {
-    setSaveSuccess(true);
-    setCelebrationBanner('✨ AVATAR CUSTOMIZATION SAVED SUCCESSFULLY! ✨');
+    // Auto clear banner
     setTimeout(() => {
-      setSaveSuccess(false);
       setCelebrationBanner(null);
-    }, 3000);
+    }, 4000);
   };
 
-  const currentOptions = optionsDatabase[activeSubCategory] || [];
+  const activeCategoryItems = items.filter(i => i.category === activeTab);
+
+  // Tab List Definitions
+  const tabs: { id: AvatarCategory; label: string }[] = [
+    { id: 'FACE', label: 'Face' },
+    { id: 'HAIR', label: 'Hair' },
+    { id: 'TOPS', label: 'Tops' },
+    { id: 'BOTTOMS', label: 'Bottoms' },
+    { id: 'SHOES', label: 'Shoes' },
+    { id: 'HEADWEAR', label: 'Headwear' },
+    { id: 'GLASSES', label: 'Glasses' },
+    { id: 'ACCESSORIES', label: 'Accessories' },
+    { id: 'BACKGROUNDS', label: 'Backgrounds' },
+    { id: 'EFFECTS', label: 'Effects' }
+  ];
+
+  // Collection unlocks stats
+  const unlockedCount = items.filter(i => i.unlocked).length;
+  const totalCount = items.length;
+
+  const categoryProgress = (cat: AvatarCategory) => {
+    const total = items.filter(i => i.category === cat).length;
+    const unlocked = items.filter(i => i.category === cat && i.unlocked).length;
+    return { unlocked, total };
+  };
 
   return (
-    <div className="bg-[#0b0f19] border border-[#1e293b] rounded-2xl p-6 shadow-2xl text-slate-100 max-w-7xl mx-auto">
-      {/* Save success banner */}
+    <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 shadow-sm">
+      {/* Celebration overlay bar */}
       <AnimatePresence>
         {celebrationBanner && (
-          <motion.div
-            initial={{ y: -50, opacity: 0 }}
+          <motion.div 
+            initial={{ y: -30, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            exit={{ y: -50, opacity: 0 }}
-            className={`fixed top-6 left-1/2 -translate-x-1/2 z-50 ${saveSuccess ? 'bg-gradient-to-r from-emerald-500 to-teal-500' : 'bg-neutral-800'} text-white text-xs font-black px-6 py-3.5 rounded-full shadow-2xl border border-white/20 flex items-center gap-2.5 text-center`}
+            exit={{ y: -30, opacity: 0 }}
+            className="bg-emerald-600 text-white text-xs font-black px-4 py-2.5 rounded-xl shadow-lg flex items-center justify-center gap-2 mb-4 mx-auto max-w-md text-center"
           >
-            <Sparkles className="w-4 h-4 animate-bounce text-yellow-300" />
+            <Sparkles className="w-4 h-4 animate-pulse" />
             {celebrationBanner}
-            <Sparkles className="w-4 h-4 animate-bounce text-yellow-300" />
+            <Sparkles className="w-4 h-4 animate-pulse" />
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[#1e293b] pb-5 mb-6 gap-4">
+      <div className="flex items-center justify-between border-b border-neutral-100 pb-4 mb-6">
         <div>
-          <h2 className="text-xl font-black tracking-tight text-white flex items-center gap-2.5">
-            <ShoppingBag className="w-6 h-6 text-teal-400" />
-            ThriveCampus 3D Avatar Closet
+          <h2 className="text-base font-black text-neutral-900 flex items-center gap-2">
+            <ShoppingBag className="w-5 h-5 text-teal-600" />
+            Student Avatar Closet
           </h2>
-          <p className="text-xs text-slate-400 mt-1">
-            Personalize your modular 3D character avatar with wellness milestones.
-          </p>
+          <p className="text-xs text-neutral-500 mt-0.5">Customize your digital identity using wellness accomplishments.</p>
         </div>
-        <div className="flex items-center gap-3">
-          <button
-            onClick={onClose}
-            className="text-xs font-black text-slate-300 bg-slate-800/80 hover:bg-slate-700/80 px-4 py-2.5 rounded-xl transition-all border border-slate-700 active:scale-95 flex items-center gap-1.5"
-          >
-            ← Return to Campus
-          </button>
-          <button
-            onClick={handleSave}
-            className="text-xs font-black text-white bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-400 hover:to-emerald-400 px-5 py-2.5 rounded-xl transition-all shadow-lg active:scale-95 flex items-center gap-1.5"
-          >
-            <CheckCircle2 className="w-4 h-4" />
-            Save Avatar
-          </button>
-        </div>
+        <button 
+          onClick={onClose}
+          className="text-xs font-extrabold text-[#24796b] bg-[#e4f6ec] hover:bg-[#d1ebd9] px-3 py-1.5 rounded-xl transition-all shadow-sm shrink-0"
+        >
+          ← Save & Return
+        </button>
       </div>
 
-      {/* Main PUBG / Roblox Dual Panel Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+      {/* CLOSET LAYOUT: THREE PANELS GRID */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         
-        {/* LEFT PANEL: CATEGORIES AND ASSETS SELECTION (COLS: 7) */}
-        <div className="lg:col-span-7 flex flex-col md:flex-row gap-5 border border-[#1e293b] bg-[#111625] rounded-2xl p-5">
-          
-          {/* Main Category Sidebar (Roblox / PUBG Style Icons) */}
-          <div className="md:w-1/4 flex flex-row md:flex-col overflow-x-auto md:overflow-x-visible gap-2 pb-3 md:pb-0 scrollbar-none border-b md:border-b-0 md:border-r border-[#1e293b] md:pr-4">
-            {(['BODY', 'HAIR', 'FACE', 'CLOTHES', 'ACCESSORIES', 'REWARDS', 'ANIMATIONS'] as MainCategory[]).map((cat) => {
-              const active = activeCategory === cat;
+        {/* PANEL 1: LEFT SIDEBAR - CATEGORIES (COLS: 3) */}
+        <div className="lg:col-span-3 flex flex-col gap-2.5 w-full">
+          <h3 className="text-[10px] font-black uppercase tracking-widest text-neutral-400 px-2.5">
+            Categories
+          </h3>
+          <div className="flex flex-row lg:flex-col overflow-x-auto lg:overflow-x-visible gap-1 pb-2 lg:pb-0 scrollbar-none">
+            {tabs.map(tab => {
+              const active = activeTab === tab.id;
+              const { unlocked, total } = categoryProgress(tab.id);
               return (
                 <button
-                  key={cat}
-                  onClick={() => setActiveCategory(cat)}
-                  className={`flex items-center gap-2.5 px-3.5 py-3 rounded-xl text-[11px] font-black uppercase tracking-wider transition-all text-left whitespace-nowrap md:whitespace-normal shrink-0 ${active ? 'bg-gradient-to-r from-teal-500/15 to-emerald-500/10 text-teal-400 border border-teal-500/30' : 'text-slate-400 hover:bg-slate-800/40 hover:text-white border border-transparent'}`}
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition-all text-left whitespace-nowrap lg:whitespace-normal shrink-0 lg:shrink ${active ? 'bg-neutral-100 text-[#24796b]' : 'text-neutral-500 hover:bg-neutral-50 hover:text-neutral-900'}`}
                 >
-                  <span className={`w-1.5 h-1.5 rounded-full ${active ? 'bg-teal-400' : 'bg-transparent'}`} />
-                  {cat}
+                  <span className="flex items-center gap-2">
+                    <span className={`w-1.5 h-1.5 rounded-full ${active ? 'bg-[#24796b]' : 'bg-transparent'}`} />
+                    {tab.label}
+                  </span>
+                  <span className="text-[9.5px] bg-neutral-200/50 text-neutral-600 px-1.5 py-0.5 rounded-md font-mono">
+                    {unlocked}/{total}
+                  </span>
                 </button>
               );
             })}
           </div>
 
-          {/* Sub-Category Sub-tabs and Grid Items */}
-          <div className="flex-1 flex flex-col gap-4">
-            
-            {/* Sub-Category Sub-tabs selector */}
-            <div className="flex flex-wrap gap-2 pb-2.5 border-b border-[#1e293b]">
-              {activeCategory === 'BODY' && (
-                <button onClick={() => setActiveSubCategory('skinTone')} className={`text-[10px] font-black uppercase px-3 py-1.5 rounded-lg border ${activeSubCategory === 'skinTone' ? 'bg-teal-500 text-white border-transparent' : 'bg-slate-800/50 text-slate-300 border-slate-700'}`}>Skin Tone</button>
-              )}
-              {activeCategory === 'HAIR' && (
-                <>
-                  <button onClick={() => setActiveSubCategory('hairStyle')} className={`text-[10px] font-black uppercase px-3 py-1.5 rounded-lg border ${activeSubCategory === 'hairStyle' ? 'bg-teal-500 text-white border-transparent' : 'bg-slate-800/50 text-slate-300 border-slate-700'}`}>Style</button>
-                  <button onClick={() => setActiveSubCategory('hairColor')} className={`text-[10px] font-black uppercase px-3 py-1.5 rounded-lg border ${activeSubCategory === 'hairColor' ? 'bg-teal-500 text-white border-transparent' : 'bg-slate-800/50 text-slate-300 border-slate-700'}`}>Color</button>
-                </>
-              )}
-              {activeCategory === 'FACE' && (
-                <>
-                  <button onClick={() => setActiveSubCategory('eyeStyle')} className={`text-[10px] font-black uppercase px-3 py-1.5 rounded-lg border ${activeSubCategory === 'eyeStyle' ? 'bg-teal-500 text-white border-transparent' : 'bg-slate-800/50 text-slate-300 border-slate-700'}`}>Eyes</button>
-                  <button onClick={() => setActiveSubCategory('eyeColor')} className={`text-[10px] font-black uppercase px-3 py-1.5 rounded-lg border ${activeSubCategory === 'eyeColor' ? 'bg-teal-500 text-white border-transparent' : 'bg-slate-800/50 text-slate-300 border-slate-700'}`}>Iris Color</button>
-                  <button onClick={() => setActiveSubCategory('eyebrows')} className={`text-[10px] font-black uppercase px-3 py-1.5 rounded-lg border ${activeSubCategory === 'eyebrows' ? 'bg-teal-500 text-white border-transparent' : 'bg-slate-800/50 text-slate-300 border-slate-700'}`}>Eyebrows</button>
-                  <button onClick={() => setActiveSubCategory('smile')} className={`text-[10px] font-black uppercase px-3 py-1.5 rounded-lg border ${activeSubCategory === 'smile' ? 'bg-teal-500 text-white border-transparent' : 'bg-slate-800/50 text-slate-300 border-slate-700'}`}>Mouth</button>
-                  <button onClick={() => setActiveSubCategory('faceAccessory')} className={`text-[10px] font-black uppercase px-3 py-1.5 rounded-lg border ${activeSubCategory === 'faceAccessory' ? 'bg-teal-500 text-white border-transparent' : 'bg-slate-800/50 text-slate-300 border-slate-700'}`}>Makeup</button>
-                </>
-              )}
-              {activeCategory === 'CLOTHES' && (
-                <>
-                  <button onClick={() => setActiveSubCategory('top')} className={`text-[10px] font-black uppercase px-3 py-1.5 rounded-lg border ${activeSubCategory === 'top' ? 'bg-teal-500 text-white border-transparent' : 'bg-slate-800/50 text-slate-300 border-slate-700'}`}>Tops</button>
-                  <button onClick={() => setActiveSubCategory('jacket')} className={`text-[10px] font-black uppercase px-3 py-1.5 rounded-lg border ${activeSubCategory === 'jacket' ? 'bg-teal-500 text-white border-transparent' : 'bg-slate-800/50 text-slate-300 border-slate-700'}`}>Jackets</button>
-                  <button onClick={() => setActiveSubCategory('hoodie')} className={`text-[10px] font-black uppercase px-3 py-1.5 rounded-lg border ${activeSubCategory === 'hoodie' ? 'bg-teal-500 text-white border-transparent' : 'bg-slate-800/50 text-slate-300 border-slate-700'}`}>Hoodies</button>
-                  <button onClick={() => setActiveSubCategory('bottom')} className={`text-[10px] font-black uppercase px-3 py-1.5 rounded-lg border ${activeSubCategory === 'bottom' ? 'bg-teal-500 text-white border-transparent' : 'bg-slate-800/50 text-slate-300 border-slate-700'}`}>Bottoms</button>
-                  <button onClick={() => setActiveSubCategory('shoes')} className={`text-[10px] font-black uppercase px-3 py-1.5 rounded-lg border ${activeSubCategory === 'shoes' ? 'bg-teal-500 text-white border-transparent' : 'bg-slate-800/50 text-slate-300 border-slate-700'}`}>Shoes</button>
-                  <button onClick={() => setActiveSubCategory('socks')} className={`text-[10px] font-black uppercase px-3 py-1.5 rounded-lg border ${activeSubCategory === 'socks' ? 'bg-teal-500 text-white border-transparent' : 'bg-slate-800/50 text-slate-300 border-slate-700'}`}>Socks</button>
-                </>
-              )}
-              {activeCategory === 'ACCESSORIES' && (
-                <>
-                  <button onClick={() => setActiveSubCategory('glasses')} className={`text-[10px] font-black uppercase px-3 py-1.5 rounded-lg border ${activeSubCategory === 'glasses' ? 'bg-teal-500 text-white border-transparent' : 'bg-slate-800/50 text-slate-300 border-slate-700'}`}>Glasses</button>
-                  <button onClick={() => setActiveSubCategory('cap')} className={`text-[10px] font-black uppercase px-3 py-1.5 rounded-lg border ${activeSubCategory === 'cap' ? 'bg-teal-500 text-white border-transparent' : 'bg-slate-800/50 text-slate-300 border-slate-700'}`}>Caps</button>
-                  <button onClick={() => setActiveSubCategory('backpack')} className={`text-[10px] font-black uppercase px-3 py-1.5 rounded-lg border ${activeSubCategory === 'backpack' ? 'bg-teal-500 text-white border-transparent' : 'bg-slate-800/50 text-slate-300 border-slate-700'}`}>Backpacks</button>
-                  <button onClick={() => setActiveSubCategory('watch')} className={`text-[10px] font-black uppercase px-3 py-1.5 rounded-lg border ${activeSubCategory === 'watch' ? 'bg-teal-500 text-white border-transparent' : 'bg-slate-800/50 text-slate-300 border-slate-700'}`}>Watches</button>
-                  <button onClick={() => setActiveSubCategory('waterBottle')} className={`text-[10px] font-black uppercase px-3 py-1.5 rounded-lg border ${activeSubCategory === 'waterBottle' ? 'bg-teal-500 text-white border-transparent' : 'bg-slate-800/50 text-slate-300 border-slate-700'}`}>Bottles</button>
-                </>
-              )}
-              {activeCategory === 'REWARDS' && (
-                <button onClick={() => setActiveSubCategory('rewardAccessory')} className={`text-[10px] font-black uppercase px-3 py-1.5 rounded-lg border ${activeSubCategory === 'rewardAccessory' ? 'bg-teal-500 text-white border-transparent' : 'bg-slate-800/50 text-slate-300 border-slate-700'}`}>Special Rewards</button>
-              )}
-              {activeCategory === 'ANIMATIONS' && (
-                <button onClick={() => setActiveSubCategory('activeAnimation')} className={`text-[10px] font-black uppercase px-3 py-1.5 rounded-lg border ${activeSubCategory === 'activeAnimation' ? 'bg-teal-500 text-white border-transparent' : 'bg-slate-800/50 text-slate-300 border-slate-700'}`}>Active Emote</button>
-              )}
+          {/* Collection Status Progress Bar */}
+          <div className="mt-4 bg-neutral-50 border border-neutral-100 rounded-2xl p-3.5 shadow-inner hidden lg:block">
+            <span className="text-[9.5px] font-black text-neutral-400 uppercase tracking-widest">
+              My Collection
+            </span>
+            <div className="flex items-center justify-between mt-2.5">
+              <span className="text-xs font-black text-neutral-800">{unlockedCount} / {totalCount} Items</span>
+              <span className="text-[10px] font-bold text-teal-600">{Math.round((unlockedCount / totalCount) * 100)}%</span>
             </div>
-
-            {/* Collection Grid items */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3.5 max-h-[460px] overflow-y-auto pr-1">
-              {currentOptions.map((opt) => {
-                const isEquipped = (customization as any)[activeSubCategory] === opt.value;
-                const unlocked = isItemUnlocked(opt.req);
-
-                return (
-                  <div
-                    key={opt.id}
-                    onClick={() => unlocked && handleEquip(activeSubCategory, opt.value, opt.name)}
-                    className={`relative border rounded-2xl p-4 flex flex-col justify-between transition-all cursor-pointer select-none group h-36 ${isEquipped ? 'bg-gradient-to-br from-teal-950/40 to-slate-900 border-teal-500 shadow-lg shadow-teal-500/5 scale-[1.02]' : 'bg-slate-900/60 border-slate-800 hover:bg-slate-800/60 hover:border-slate-700'} ${!unlocked ? 'opacity-60 cursor-not-allowed' : ''}`}
-                  >
-                    {/* Top indicator / check badge */}
-                    <div className="flex justify-between items-start gap-1">
-                      {isEquipped ? (
-                        <span className="text-[9px] font-black text-emerald-400 bg-emerald-950/60 border border-emerald-500/30 px-2 py-0.5 rounded-md flex items-center gap-1">
-                          <Check className="w-2.5 h-2.5" /> WEARING
-                        </span>
-                      ) : (
-                        <span className="text-[8px] font-bold text-slate-500 uppercase tracking-wide">
-                          {activeSubCategory}
-                        </span>
-                      )}
-                      {!unlocked && (
-                        <Lock className="w-3.5 h-3.5 text-amber-500 animate-pulse" />
-                      )}
-                    </div>
-
-                    {/* Central Display Visual asset (Color Dot, Shape Representation) */}
-                    <div className="my-2.5 flex items-center justify-center">
-                      {opt.displayColor ? (
-                        <div
-                          className="w-10 h-10 rounded-full border-2 border-white/20 shadow-md transform group-hover:scale-115 transition-all"
-                          style={{ backgroundColor: opt.displayColor }}
-                        />
-                      ) : (
-                        <div className="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center transform group-hover:scale-115 transition-all border border-slate-700">
-                          {activeSubCategory === 'hairStyle' && <span className="text-xl">💇‍♂️</span>}
-                          {activeSubCategory === 'eyeStyle' && <span className="text-xl">👁️</span>}
-                          {activeSubCategory === 'eyebrows' && <span className="text-xl">〰️</span>}
-                          {activeSubCategory === 'smile' && <span className="text-xl">👄</span>}
-                          {activeSubCategory === 'faceAccessory' && <span className="text-xl">✨</span>}
-                          {activeSubCategory === 'top' && <span className="text-xl">👕</span>}
-                          {activeSubCategory === 'jacket' && <span className="text-xl">🧥</span>}
-                          {activeSubCategory === 'hoodie' && <span className="text-xl">🧥</span>}
-                          {activeSubCategory === 'bottom' && <span className="text-xl">👖</span>}
-                          {activeSubCategory === 'shoes' && <span className="text-xl">👟</span>}
-                          {activeSubCategory === 'socks' && <span className="text-xl">🧦</span>}
-                          {activeSubCategory === 'glasses' && <span className="text-xl">👓</span>}
-                          {activeSubCategory === 'cap' && <span className="text-xl">🧢</span>}
-                          {activeSubCategory === 'backpack' && <span className="text-xl">🎒</span>}
-                          {activeSubCategory === 'watch' && <span className="text-xl">⌚</span>}
-                          {activeSubCategory === 'waterBottle' && <span className="text-xl">🍼</span>}
-                          {activeSubCategory === 'rewardAccessory' && <span className="text-xl">👑</span>}
-                          {activeSubCategory === 'activeAnimation' && <span className="text-xl">🏃‍♂️</span>}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Item label / Lock details */}
-                    <div className="text-center">
-                      <h4 className="text-[11px] font-black text-slate-100 truncate">
-                        {opt.name}
-                      </h4>
-                      {!unlocked && (
-                        <div className="text-[8.5px] font-semibold text-amber-500 mt-1 leading-normal whitespace-normal line-clamp-2">
-                          {opt.req.includes('Hydration Hero') || opt.req.includes('30-Day Challenge') ? `🔒 ${opt.req}` : `🔒 Lock: ${opt.req}`}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
+            <div className="h-2 bg-neutral-200/80 rounded-full mt-1.5 overflow-hidden">
+              <div className="h-full bg-[#24796b] rounded-full transition-all duration-300" style={{ width: `${(unlockedCount / totalCount) * 100}%` }} />
             </div>
           </div>
         </div>
 
-        {/* RIGHT PANEL: LIVE INTERACTIVE 3D AVATAR (COLS: 5) */}
-        <div className="lg:col-span-5 flex flex-col gap-5 border border-[#1e293b] bg-[#111625] rounded-2xl p-5">
-          <div className="flex justify-between items-center">
-            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-              Interactive 3D Preview
-            </span>
-            <span className="text-[10px] font-bold text-teal-400 bg-teal-950/80 border border-teal-800/40 px-2 py-0.5 rounded-md">
-              Emote: {customization.activeAnimation}
-            </span>
-          </div>
+        {/* PANEL 2: CENTER - LARGE 3D INTERACTIVE AVATAR PREVIEW (COLS: 4) */}
+        <div className="lg:col-span-4 bg-neutral-50/50 border border-neutral-200/70 rounded-2xl p-4 flex flex-col items-center justify-center">
+          <span className="text-[10px] font-black text-neutral-400 uppercase tracking-wider mb-2">
+            Interactive Avatar Preview
+          </span>
 
-          {/* Interactive R3F View Container */}
-          <div className="flex-1 min-h-[320px] max-h-[380px] relative">
-            <ThreeAvatarRenderer
-              customization={customization}
+          {/* The Live Render Container */}
+          <div className="relative w-full max-w-[240px] flex items-center justify-center">
+            <RenderCustomAvatar 
+              equipped={equipped}
+              skinId={skinId}
+              hairColorId={hairColorId}
+              size={240}
               rotationY={rotationY}
               zoom={zoom}
             />
 
-            {/* Float HUD controls inside 3D viewer */}
-            <div className="absolute bottom-3 left-3 right-3 flex justify-between items-center pointer-events-none">
-              <div className="flex gap-2 pointer-events-auto">
-                <button
-                  onClick={() => setZoom((prev) => Math.min(prev + 0.15, 2.2))}
-                  className="w-8 h-8 rounded-lg bg-slate-900/90 hover:bg-slate-800 border border-slate-700/60 flex items-center justify-center text-slate-300 transition-all text-xs"
-                  title="Zoom In"
-                >
-                  <ZoomIn className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => setZoom((prev) => Math.max(prev - 0.15, 0.5))}
-                  className="w-8 h-8 rounded-lg bg-slate-900/90 hover:bg-slate-800 border border-slate-700/60 flex items-center justify-center text-slate-300 transition-all text-xs"
-                  title="Zoom Out"
-                >
-                  <ZoomOut className="w-4 h-4" />
-                </button>
-              </div>
-
-              <div className="flex gap-2 pointer-events-auto">
-                <button
-                  onClick={() => setRotationY((prev) => prev - Math.PI / 4)}
-                  className="px-2 py-1 rounded-lg bg-slate-900/90 hover:bg-slate-800 border border-slate-700/60 text-[9px] font-black uppercase text-slate-300 transition-all"
-                  title="Rotate Left"
-                >
-                  ↺ Left
-                </button>
-                <button
-                  onClick={() => setRotationY((prev) => prev + Math.PI / 4)}
-                  className="px-2 py-1 rounded-lg bg-slate-900/90 hover:bg-slate-800 border border-slate-700/60 text-[9px] font-black uppercase text-slate-300 transition-all"
-                  title="Rotate Right"
-                >
-                  Right ↻
-                </button>
-                <button
-                  onClick={() => {
-                    setRotationY(0);
-                    setZoom(1);
-                  }}
-                  className="w-8 h-8 rounded-lg bg-rose-950/80 hover:bg-rose-900 border border-rose-800/60 flex items-center justify-center text-rose-300 transition-all"
-                  title="Reset Camera"
-                >
-                  <RotateCcw className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            </div>
+            {/* Float tags */}
+            {equipped.EFFECTS !== 'effect-none' && (
+              <span className="absolute bottom-3 left-3 bg-yellow-100 text-yellow-900 text-[8.5px] font-black uppercase px-2 py-0.5 rounded border border-yellow-300 shadow-sm flex items-center gap-1">
+                <Sparkles className="w-2.5 h-2.5 animate-spin" />
+                Active VFX
+              </span>
+            )}
           </div>
 
-          {/* Quick Animation Selector under the viewer */}
-          <div className="flex flex-col gap-2.5">
-            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-              Animations & Emotes
-            </span>
-            <div className="grid grid-cols-4 sm:grid-cols-5 gap-2 max-h-32 overflow-y-auto scrollbar-none">
-              {(['Wave', 'Celebrate', 'Dance', 'Run', 'Walk', 'High Five', 'Meditate', 'Study', 'Read Book', 'Sleep']).map((anim) => {
-                const active = customization.activeAnimation === anim;
-                return (
+          {/* View control tools (rotate left/right/360, zoom, reset) */}
+          <AvatarViewerControls 
+            rotationY={rotationY} 
+            setRotationY={setRotationY} 
+            zoom={zoom} 
+            setZoom={setZoom} 
+          />
+
+          {/* Skin and Hair Color options quick-bar */}
+          <div className="w-full mt-4 border-t border-neutral-200/60 pt-4 flex flex-col gap-2.5">
+            <div>
+              <span className="text-[9.5px] font-black text-neutral-400 uppercase tracking-wider">
+                Skin Tone
+              </span>
+              <div className="flex gap-2 mt-1.5">
+                {SKIN_TONES.map(s => (
                   <button
-                    key={anim}
-                    onClick={() => setCustomization((prev: any) => ({ ...prev, activeAnimation: anim }))}
-                    className={`px-1 py-2 rounded-lg text-[10px] font-extrabold text-center transition-all ${active ? 'bg-gradient-to-r from-teal-500 to-emerald-500 text-white shadow-lg' : 'bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700'}`}
-                  >
-                    {anim === 'Wave' && '👋 '}
-                    {anim === 'Celebrate' && '🎉 '}
-                    {anim === 'Dance' && '💃 '}
-                    {anim === 'Run' && '🏃‍♂️ '}
-                    {anim === 'Walk' && '🚶‍♂️ '}
-                    {anim === 'High Five' && '✋ '}
-                    {anim === 'Meditate' && '🧘 '}
-                    {anim === 'Study' && '📝 '}
-                    {anim === 'Read Book' && '📖 '}
-                    {anim === 'Sleep' && '💤 '}
-                    <span className="block text-[8.5px] mt-1 font-semibold truncate">{anim}</span>
-                  </button>
-                );
-              })}
+                    key={s.id}
+                    onClick={() => setSkinId(s.id)}
+                    className={`w-6 h-6 rounded-full border-2 transition-all ${skinId === s.id ? 'border-[#24796b] scale-110 shadow-md' : 'border-transparent'}`}
+                    style={{ backgroundColor: s.color }}
+                    title={s.name}
+                  />
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <span className="text-[9.5px] font-black text-neutral-400 uppercase tracking-wider">
+                Hair Colour
+              </span>
+              <div className="flex gap-2 mt-1.5">
+                {HAIR_COLORS.map(h => (
+                  <button
+                    key={h.id}
+                    onClick={() => setHairColorId(h.id)}
+                    className={`w-6 h-6 rounded-full border-2 transition-all ${hairColorId === h.id ? 'border-[#24796b] scale-110 shadow-md' : 'border-transparent'}`}
+                    style={{ backgroundColor: h.color }}
+                    title={h.name}
+                  />
+                ))}
+              </div>
             </div>
           </div>
+        </div>
 
+        {/* PANEL 3: RIGHT PANEL - ITEMS SELECTION CLOSET (COLS: 5) */}
+        <div className="lg:col-span-5 flex flex-col gap-3.5">
+          <div className="flex justify-between items-center px-1">
+            <h3 className="text-xs font-black uppercase tracking-wider text-neutral-800">
+              {activeTab} Items
+            </h3>
+            <span className="text-[10px] font-bold text-neutral-400">
+              Category items unlocked
+            </span>
+          </div>
+
+          {/* Grid list of items inside active category */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[460px] overflow-y-auto pr-1">
+            {activeCategoryItems.map(item => {
+              const isEquipped = equipped[item.category] === item.id;
+              const theme = getRarityTheme(item.rarity);
+
+              return (
+                <div 
+                  key={item.id} 
+                  className={`border rounded-2xl p-3.5 flex flex-col justify-between shadow-sm transition-all relative ${theme.bg} ${isEquipped ? 'border-2 border-emerald-500' : 'border-neutral-200'}`}
+                >
+                  {/* Top corner stats or state tags */}
+                  <div className="flex justify-between items-start gap-1">
+                    <span className={`text-[8.5px] font-black px-1.5 py-0.5 rounded uppercase tracking-wider ${theme.badge}`}>
+                      {item.rarity}
+                    </span>
+                    
+                    {!item.unlocked && <Lock className="w-3.5 h-3.5 text-neutral-400" />}
+                    {item.unlocked && isEquipped && (
+                      <span className="text-[8.5px] text-emerald-800 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded font-black flex items-center gap-1 shrink-0">
+                        <Check className="w-3 h-3" /> EQUIPPED
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Body Info */}
+                  <div className="my-3 flex-1">
+                    <h4 className="text-xs font-black text-neutral-900 leading-tight">
+                      {item.name}
+                    </h4>
+                    
+                    {!item.unlocked ? (
+                      <div className="mt-1.5">
+                        <p className="text-[9.5px] font-semibold text-neutral-500 leading-relaxed">
+                          🔒 {item.unlockRequirement}
+                        </p>
+                        
+                        {item.need > 0 && (
+                          <div className="mt-2">
+                            <div className="flex items-center justify-between text-[8px] font-bold text-neutral-400">
+                              <span>Progress</span>
+                              <span>{item.have} / {item.need}</span>
+                            </div>
+                            <div className="h-1 bg-neutral-200 rounded-full overflow-hidden mt-0.5">
+                              <div 
+                                className="h-full bg-neutral-400 rounded-full" 
+                                style={{ width: `${Math.min((item.have / item.need) * 100, 100)}%` }}
+                              />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="text-[10px] text-neutral-500 mt-1">
+                        Unlocked and ready to wear!
+                      </p>
+                    )}
+                  </div>
+
+                  {/* CTA BUTTON */}
+                  <div className="mt-2 border-t border-neutral-100/60 pt-2">
+                    {item.unlocked ? (
+                      isEquipped ? (
+                        <button
+                          disabled
+                          className="w-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-[10px] font-black py-1.5 rounded-lg text-center cursor-default"
+                        >
+                          EQUIPPED
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => equipItem(item.id, item.category)}
+                          className="w-full bg-neutral-900 text-white hover:bg-neutral-800 text-[10px] font-black py-1.5 rounded-lg text-center transition-all shadow-sm active:scale-95"
+                        >
+                          EQUIP ITEM
+                        </button>
+                      )
+                    ) : (
+                      item.ctaText && (
+                        <button
+                          onClick={() => onNavigateToQuest(item.ctaSection || 'today')}
+                          className="w-full border border-neutral-200 bg-white hover:bg-neutral-50 text-[10px] font-black text-neutral-700 py-1.5 rounded-lg text-center transition-all flex items-center justify-center gap-1"
+                        >
+                          <Play className="w-2.5 h-2.5" />
+                          {item.ctaText}
+                        </button>
+                      )
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
 
       </div>
     </div>
   );
 };
-
