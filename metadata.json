@@ -1,0 +1,6 @@
+{
+  "name": "ThriveCampus",
+  "description": "An interactive, gamified student wellbeing application featuring custom avatars, calendar activity logs, daily quests, school challenges, and redeemable campus rewards.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
