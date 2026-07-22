@@ -1049,40 +1049,9 @@ export const AvatarViewerControls: React.FC<{
   setZoom: (z: number) => void;
 }> = ({ rotationY, setRotationY, zoom, setZoom }) => {
   return (
-    <div className="flex items-center justify-between gap-2.5 bg-neutral-50 border border-neutral-200/50 rounded-xl px-3.5 py-2 mt-4 text-xs font-bold text-neutral-500 shadow-sm">
-      {/* 3D Rotate Buttons */}
-      <div className="flex items-center gap-1">
-        <button 
-          onClick={() => setRotationY(rotationY - 45)}
-          className="p-1.5 hover:bg-white rounded-lg border border-transparent hover:border-neutral-200 active:bg-neutral-100 transition-all text-neutral-600 shrink-0"
-          title="Rotate Left"
-        >
-          <ChevronLeft className="w-4 h-4" />
-        </button>
-        <span className="text-[10px] uppercase font-mono tracking-wider w-16 text-center select-none">
-          Rotate 3D
-        </span>
-        <button 
-          onClick={() => setRotationY(rotationY + 45)}
-          className="p-1.5 hover:bg-white rounded-lg border border-transparent hover:border-neutral-200 active:bg-neutral-100 transition-all text-neutral-600 shrink-0"
-          title="Rotate Right"
-        >
-          <ChevronRight className="w-4 h-4" />
-        </button>
-      </div>
-
-      {/* Auto Rotate Trigger */}
-      <button
-        onClick={() => setRotationY(rotationY + 360)}
-        className="p-1.5 hover:bg-white rounded-lg border border-transparent hover:border-neutral-200 active:bg-neutral-100 transition-all text-neutral-600 flex items-center gap-1"
-        title="360 Rotation"
-      >
-        <RotateCcw className="w-3.5 h-3.5" />
-        <span className="text-[9px] uppercase font-mono">360°</span>
-      </button>
-
+    <div className="flex items-center justify-center gap-2.5 bg-neutral-50 border border-neutral-200/50 rounded-xl px-3.5 py-2 mt-4 text-xs font-bold text-neutral-500 shadow-sm">
       {/* Zoom Buttons */}
-      <div className="flex items-center gap-1 border-l border-neutral-200 pl-2.5">
+      <div className="flex items-center gap-1">
         <button 
           onClick={() => setZoom(Math.min(zoom + 0.15, 1.6))}
           className="p-1.5 hover:bg-white rounded-lg border border-transparent hover:border-neutral-200 active:bg-neutral-100 transition-all text-neutral-600 shrink-0"
@@ -1426,7 +1395,7 @@ export const AvatarCloset: React.FC<AvatarClosetProps> = ({ stats, onClose, onNa
             )}
           </div>
 
-          {/* View control tools (rotate left/right/360, zoom, reset) */}
+          {/* View control tools (zoom, reset) */}
           <AvatarViewerControls 
             rotationY={rotationY} 
             setRotationY={setRotationY} 

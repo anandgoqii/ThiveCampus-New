@@ -72,6 +72,7 @@ interface RewardItem {
   tint: string;   // Bg tint
   fg: string;     // Fg color
   iconPaths: string[];
+  imageUrl?: string;
 }
 
 const getThemeFromQuestColors = (fg: string): 'teal' | 'amber' | 'emerald' | 'sapphire' | 'ruby' | 'amethyst' | 'neutral' | 'orange' | 'rose' | 'pink' | 'purple' | 'blue' | 'yellow' => {
@@ -86,6 +87,59 @@ const getThemeFromQuestColors = (fg: string): 'teal' | 'amber' | 'emerald' | 'sa
   return 'teal';
 };
 
+export const THCoinIcon: React.FC<{
+  size?: number;
+  className?: string;
+  animated?: boolean;
+}> = ({ size = 32, className = "", animated = true }) => {
+  const content = (
+    <div className="relative inline-flex items-center justify-center overflow-hidden rounded-full shrink-0 select-none group">
+      <img
+        src="https://appcdn.goqii.com/storeimg/33698_1784703253.png"
+        alt="TH Coin"
+        style={{ width: size, height: size }}
+        className={`object-contain drop-shadow-[0_3px_6px_rgba(217,119,6,0.3)] shrink-0 select-none ${className}`}
+        referrerPolicy="no-referrer"
+      />
+
+      {/* Shine sweep effect across the coin */}
+      <motion.div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: "linear-gradient(115deg, transparent 20%, rgba(255,255,255,0.75) 50%, transparent 80%)",
+        }}
+        animate={{
+          x: ["-140%", "140%"],
+        }}
+        transition={{
+          duration: 2.2,
+          repeat: Infinity,
+          repeatDelay: 2.5,
+          ease: "easeInOut",
+        }}
+      />
+    </div>
+  );
+
+  if (!animated) return content;
+
+  return (
+    <motion.div
+      className="inline-flex items-center justify-center shrink-0"
+      animate={{ y: [0, -2.5, 0], rotate: [0, 1.5, -1.5, 0] }}
+      transition={{
+        duration: 3,
+        repeat: Infinity,
+        ease: "easeInOut",
+      }}
+      whileHover={{ scale: 1.15, rotate: 8 }}
+      whileTap={{ scale: 0.92 }}
+    >
+      {content}
+    </motion.div>
+  );
+};
+
 const ThreeDAnimatedIcon: React.FC<{
   paths?: string[];
   lucideIcon?: React.ReactNode;
@@ -96,7 +150,8 @@ const ThreeDAnimatedIcon: React.FC<{
   onClick?: (e: React.MouseEvent) => void;
   title?: string;
   image?: string;
-}> = ({ paths, lucideIcon, colorTheme = 'teal', size = 18, containerSize = 36, floatDelay = 0, onClick, title, image }) => {
+  noBox?: boolean;
+}> = ({ paths, lucideIcon, colorTheme = 'teal', size = 18, containerSize = 36, floatDelay = 0, onClick, title, image, noBox }) => {
   const themeStyles = {
     teal: {
       bg: "bg-gradient-to-br from-[#33bfae] via-[#1f917b] to-[#0f6b5b]",
@@ -179,6 +234,87 @@ const ThreeDAnimatedIcon: React.FC<{
   };
 
   const currentTheme = themeStyles[colorTheme] || themeStyles.teal;
+
+  if (noBox) {
+    return (
+      <motion.div
+        onClick={onClick}
+        title={title}
+        animate={{ y: [0, -3, 0] }}
+        transition={{
+          y: {
+            repeat: Infinity,
+            duration: 3.5 + Math.random() * 1.5,
+            delay: floatDelay,
+            ease: "easeInOut"
+          }
+        }}
+        whileHover={{ 
+          scale: 1.18, 
+          rotate: [0, -5, 5, 0],
+          y: -4,
+          filter: "brightness(1.1) drop-shadow(0 8px 12px rgba(0,0,0,0.18))"
+        }}
+        whileTap={{ 
+          scale: 0.92, 
+          y: 0
+        }}
+        style={{ 
+          width: containerSize, 
+          height: containerSize,
+        }}
+        className="relative flex items-center justify-center cursor-pointer select-none shrink-0 overflow-hidden rounded-xl"
+      >
+        <div className="relative flex items-center justify-center w-full h-full p-0.5">
+          {image ? (
+            <img 
+              src={image} 
+              alt="icon" 
+              className="w-full h-full object-contain filter drop-shadow-[0_4px_6px_rgba(0,0,0,0.15)]" 
+              referrerPolicy="no-referrer"
+            />
+          ) : lucideIcon ? (
+            <div className="stroke-[2.2] w-full h-full flex items-center justify-center text-amber-600">
+              {lucideIcon}
+            </div>
+          ) : paths ? (
+            <svg 
+              width={size} 
+              height={size} 
+              viewBox="0 0 24 24" 
+              fill="none" 
+              stroke="currentColor" 
+              strokeWidth={2.2} 
+              strokeLinecap="round" 
+              strokeLinejoin="round"
+              className="w-full h-full text-indigo-600 drop-shadow-sm"
+            >
+              {paths.map((d, i) => (
+                <path key={i} d={d} />
+              ))}
+            </svg>
+          ) : null}
+        </div>
+
+        {/* Shine beam sweep effect over frameless image */}
+        <motion.div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background: "linear-gradient(115deg, transparent 20%, rgba(255,255,255,0.7) 50%, transparent 80%)",
+          }}
+          animate={{
+            x: ["-140%", "140%"],
+          }}
+          transition={{
+            duration: 2.2,
+            repeat: Infinity,
+            repeatDelay: 2.5,
+            ease: "easeInOut",
+          }}
+        />
+      </motion.div>
+    );
+  }
 
   return (
     <motion.div
@@ -1942,13 +2078,8 @@ export default function App() {
               </div>
 
               {/* Coins */}
-              <div className="bg-white border border-neutral-200 rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-sm">
-                <ThreeDAnimatedIcon 
-                  lucideIcon={<Coins className="w-4 h-4 text-white fill-white/20" />}
-                  colorTheme="yellow"
-                  size={16}
-                  containerSize={36}
-                />
+              <div className="bg-white border border-neutral-200 rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-sm hover:border-amber-200 transition-colors">
+                <THCoinIcon size={36} animated />
                 <span className="text-xl font-extrabold text-neutral-900 mt-2">320</span>
                 <span className="text-[9px] font-bold text-neutral-400 mt-1 uppercase tracking-wider leading-none">TH Coins</span>
               </div>
@@ -2107,14 +2238,9 @@ export default function App() {
                   <div className="text-sm font-bold text-neutral-900 truncate">{c.t}</div>
                   <div className="text-[11px] text-neutral-400 mt-0.5">{c.s}</div>
                 </div>
-                <div className="inline-flex items-center gap-1.5 bg-amber-50 border border-amber-100 text-amber-800 rounded-full pl-1.5 pr-2.5 py-1 text-xs font-extrabold shrink-0 shadow-sm hover:scale-105 transition-transform">
-                  <ThreeDAnimatedIcon 
-                    lucideIcon={<Coins className="w-3 h-3 text-white fill-white/20" />}
-                    colorTheme="yellow"
-                    size={12}
-                    containerSize={22}
-                  />
-                  {c.rew}
+                <div className="inline-flex items-center gap-1.5 bg-amber-50 border border-amber-200/80 text-amber-900 rounded-full pl-1.5 pr-2.5 py-1 text-xs font-extrabold shrink-0 shadow-sm hover:scale-105 transition-transform">
+                  <THCoinIcon size={18} animated={false} />
+                  <span>+{c.rew}</span>
                 </div>
               </div>
 
@@ -2143,12 +2269,12 @@ export default function App() {
   // Rewards & coins marketplace
   const renderRewardsPanel = (wide: boolean) => {
     const rewards: RewardItem[] = [
-      { t: 'Canteen voucher', c: 250, tint: '#fdeccf', fg: '#b06a12', iconPaths: ['M6 2l1 4h10l1-4', 'M4 6h16l-1.5 14a2 2 0 0 1-2 2H7.5a2 2 0 0 1-2-2z'] },
-      { t: 'Extra library time', c: 150, tint: '#e7eefc', fg: '#3b6fd4', iconPaths: ['M4 19.5A2.5 2.5 0 0 1 6.5 17H20', 'M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z'] },
-      { t: 'Homework pass', c: 400, tint: '#e4f6ec', fg: '#1f8a5b', iconPaths: ['M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z', 'M14 2v6h6', 'M9 15l2 2 4-4'] },
-      { t: 'Pick sports period', c: 300, tint: '#ece8fb', fg: '#6d54d8', iconPaths: ['M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z', 'M12 2a15 15 0 0 1 0 20', 'M12 2a15 15 0 0 0 0 20', 'M2 12h20'] },
-      { t: 'Digital badge', c: 100, tint: '#e0f3ee', fg: '#17806b', iconPaths: ['M12 15a5 5 0 1 0 0-10 5 5 0 0 0 0 10z', 'M8.5 13.5L7 22l5-3 5 3-1.5-8.5'] },
-      { t: 'Movie afternoon', c: 500, tint: '#e7eefc', fg: '#3b6fd4', iconPaths: ['M2 6h20v12H2z', 'M2 10h20', 'M7 6v4M12 6v4M17 6v4'] },
+      { t: 'Canteen voucher', c: 250, tint: '#fdeccf', fg: '#b06a12', iconPaths: ['M6 2l1 4h10l1-4', 'M4 6h16l-1.5 14a2 2 0 0 1-2 2H7.5a2 2 0 0 1-2-2z'], imageUrl: 'https://appcdn.goqii.com/storeimg/79853_1784702178.png' },
+      { t: 'Extra library time', c: 150, tint: '#e7eefc', fg: '#3b6fd4', iconPaths: ['M4 19.5A2.5 2.5 0 0 1 6.5 17H20', 'M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z'], imageUrl: 'https://appcdn.goqii.com/storeimg/68823_1784702275.png' },
+      { t: 'Homework pass', c: 400, tint: '#e4f6ec', fg: '#1f8a5b', iconPaths: ['M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z', 'M14 2v6h6', 'M9 15l2 2 4-4'], imageUrl: 'https://appcdn.goqii.com/storeimg/7522_1784702247.png' },
+      { t: 'Pick sports period', c: 300, tint: '#ece8fb', fg: '#6d54d8', iconPaths: ['M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z', 'M12 2a15 15 0 0 1 0 20', 'M12 2a15 15 0 0 0 0 20', 'M2 12h20'], imageUrl: 'https://appcdn.goqii.com/storeimg/96410_1784702323.png' },
+      { t: 'Digital badge', c: 100, tint: '#e0f3ee', fg: '#17806b', iconPaths: ['M12 15a5 5 0 1 0 0-10 5 5 0 0 0 0 10z', 'M8.5 13.5L7 22l5-3 5 3-1.5-8.5'], imageUrl: 'https://appcdn.goqii.com/storeimg/21497_1784702224.png' },
+      { t: 'Custom Campus Hoodie', c: 500, tint: '#ece8fb', fg: '#6d54d8', iconPaths: ['M20.38 3.46 16 1.7a2 2 0 0 0-1.24 0l-2.76 1.11a2 2 0 0 1-1.6 0L7.64 1.7a2 2 0 0 0-1.24 0l-4.4 1.76a1 1 0 0 0-.6.92v5.18a2 2 0 0 0 1.34 1.89L6 12.5V20a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-7.5l3.38-1.35A2 2 0 0 0 22 9.26V4.38a1 1 0 0 0-.62-.92z'], imageUrl: 'https://appcdn.goqii.com/storeimg/68842_1784702840.png' },
     ];
 
     const currentCoins = 320; // user's total spendable coin reserve
@@ -2183,17 +2309,24 @@ export default function App() {
           </div>
 
           {/* Spendable Coins Card */}
-          <div className="bg-white border border-neutral-200 rounded-2xl p-5 shadow-sm">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-full bg-amber-50 border border-amber-100 flex items-center justify-center shrink-0">
-                <Coins className="w-6 h-6 text-amber-500 fill-amber-500" />
-              </div>
+          <div className="bg-white border border-neutral-200 rounded-2xl p-5 shadow-sm relative overflow-hidden">
+            <div className="absolute -right-6 -bottom-6 w-32 h-32 bg-amber-100/50 rounded-full blur-2xl pointer-events-none" />
+            <div className="flex items-center gap-3.5 relative z-10">
+              <THCoinIcon size={48} animated />
               <div>
-                <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">TH Coins (Spendable)</span>
-                <div className="text-2xl font-black text-neutral-900">{currentCoins}</div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">TH Coins</span>
+                  <span className="text-[9px] font-extrabold text-amber-800 bg-amber-100 border border-amber-200/80 px-2 py-0.5 rounded-full">
+                    Spendable
+                  </span>
+                </div>
+                <div className="text-3xl font-black text-neutral-900 tracking-tight flex items-baseline gap-1 mt-0.5">
+                  {currentCoins}
+                  <span className="text-xs font-extrabold text-amber-600">THC</span>
+                </div>
               </div>
             </div>
-            <p className="text-xs text-neutral-500 leading-relaxed mt-4">
+            <p className="text-xs text-neutral-500 leading-relaxed mt-3.5 relative z-10">
               TH Coins are spendable — redeem them for campus rewards. Earn them by completing activities set by your school.
             </p>
           </div>
@@ -2215,7 +2348,10 @@ export default function App() {
 
         {/* Rewards Market grid */}
         <div className="flex flex-col gap-4">
-          <h3 className="text-xs font-mono uppercase tracking-wider text-neutral-400">Redeem with TH Coins</h3>
+          <div className="flex items-center gap-2">
+            <THCoinIcon size={20} animated={false} />
+            <h3 className="text-xs font-mono uppercase tracking-wider text-neutral-500 font-bold">Redeem with TH Coins</h3>
+          </div>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             {rewards.map(r => {
               const affordable = currentCoins >= r.c;
@@ -2224,23 +2360,20 @@ export default function App() {
 
               return (
                 <div key={r.t} className="bg-white border border-neutral-200 rounded-2xl p-4 text-center shadow-sm flex flex-col justify-between">
-                  <div className="flex justify-center mb-3">
+                  <div className="flex justify-center my-2 h-16 items-center">
                     <ThreeDAnimatedIcon 
                       paths={r.iconPaths}
                       colorTheme={getThemeFromQuestColors(r.fg)}
-                      size={20}
-                      containerSize={42}
+                      size={r.imageUrl ? 52 : 38}
+                      containerSize={r.imageUrl ? 60 : 52}
+                      image={r.imageUrl}
+                      noBox={true}
                     />
                   </div>
                   <h4 className="text-sm font-bold text-neutral-900">{r.t}</h4>
-                  <div className="flex items-center justify-center gap-1.5 my-3 bg-amber-50/70 border border-amber-100/80 rounded-full px-2.5 py-1 w-fit mx-auto shadow-sm">
-                    <ThreeDAnimatedIcon 
-                      lucideIcon={<Coins className="w-3.5 h-3.5 text-white fill-white/20" />}
-                      colorTheme="yellow"
-                      size={12}
-                      containerSize={20}
-                    />
-                    <span className="text-xs font-black text-amber-800">{r.c} coins</span>
+                  <div className="flex items-center justify-center gap-1.5 my-3 bg-amber-50/90 border border-amber-200/80 rounded-full px-3 py-1 w-fit mx-auto shadow-sm">
+                    <THCoinIcon size={18} animated={false} />
+                    <span className="text-xs font-black text-amber-900">{r.c} TH Coins</span>
                   </div>
                   <button
                     onClick={() => claimReward(r.t, r.c)}
