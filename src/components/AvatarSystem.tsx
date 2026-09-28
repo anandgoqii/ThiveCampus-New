@@ -682,6 +682,34 @@ export const RenderCustomAvatar: React.FC<{
             transformOrigin: "50px 52px"
           }}
         >
+          {/* Back Hair Layer (Behind head, ears, and face) */}
+          {equipped.HAIR === 'hair-long' && (
+            <motion.g
+              animate={{
+                rotate: [0.8, -0.8, 0.8],
+                y: [0, 0.3, 0],
+              }}
+              transition={{
+                duration: 4.0,
+                repeat: Infinity,
+                ease: "easeInOut"
+              }}
+              style={{
+                transformOrigin: "50px 25px"
+              }}
+            >
+              <path 
+                d={hasHat && !hasHeadband
+                  ? "M32 34 C32 26, 68 26, 68 34 C68 48, 70 65, 66 74 Q50 78, 34 74 C30 65, 32 48, 32 34 Z"
+                  : "M32 32 C32 20, 68 20, 68 32 C68 48, 70 65, 66 74 Q50 78, 34 74 C30 65, 32 48, 32 32 Z"
+                } 
+                fill={hairColor} 
+              />
+              <path d="M36 34 Q33 55, 37 72" fill="none" stroke="#000" strokeWidth="1" opacity="0.15" />
+              <path d="M64 34 Q67 55, 63 72" fill="none" stroke="#000" strokeWidth="1" opacity="0.15" />
+            </motion.g>
+          )}
+
           {/* Sculpted Head Shape (Graceful jaw tapering down to a soft, rounded chin) */}
           <path 
             d="M 34.5 35 C 34.5 24, 65.5 24, 65.5 35 C 65.5 44, 60.2 52.2, 50 52.8 C 39.8 52.2, 34.5 44, 34.5 35 Z" 
@@ -816,22 +844,20 @@ export const RenderCustomAvatar: React.FC<{
                 case 'hair-long':
                   return (
                     <g>
-                      {/* Long wavy hair falling back */}
+                      {/* Top scalp & gentle forehead bangs framing (leaves face, eyebrows, eyes, nose, mouth completely clear) */}
                       <path 
-                        d={hasHat && !hasHeadband
-                          ? "M33 32 C33 26, 67 26, 67 32 C67 45, 68 55, 64 62 C59 58, 41 58, 36 62 C32 55, 33 45, 33 32 Z"
-                          : "M33 32 C33 21, 67 21, 67 32 C67 45, 68 55, 64 62 C59 58, 41 58, 36 62 C32 55, 33 45, 33 32 Z"
-                        } 
+                        d="M33 35 C32 21, 68 21, 67 35 C64 30, 58 28, 52 31 C46 28, 38 30, 33 35 Z" 
                         fill={hairColor} 
                       />
-                      <path d="M34 32 C35 24, 45 24, 48 30 C51 24, 63 24, 65 32" fill="none" stroke={hairColor} strokeWidth="2.5" />
-                      
-                      {/* Flowing shoulder waves and locks with secondary soft swing */}
+                      {/* Front hair top volume highlight */}
+                      <path d="M35 29 C40 25, 48 25, 52 27 C56 25, 62 25, 65 29" fill="none" stroke="#fff" strokeWidth="1" opacity="0.18" />
+
+                      {/* Flowing front side waves and locks over shoulders with secondary soft motion */}
                       <motion.g
                         animate={{
-                          rotate: [1.8, -1.8, 1.8],
-                          skewX: [1.2, -1.2, 1.2],
-                          y: [0, 0.5, 0],
+                          rotate: [1.5, -1.5, 1.5],
+                          skewX: [1, -1, 1],
+                          y: [0, 0.4, 0],
                         }}
                         transition={{
                           duration: 4.0,
@@ -842,11 +868,13 @@ export const RenderCustomAvatar: React.FC<{
                           transformOrigin: "50px 35px"
                         }}
                       >
-                        <path d="M32.5 35 Q29 50, 31 70 Q32 75, 34 72 Q35 68, 36 55 Z" fill={hairColor} />
-                        <path d="M67.5 35 Q71 50, 69 70 Q68 75, 66 72 Q65 68, 64 55 Z" fill={hairColor} />
-                        {/* Highlights */}
-                        <path d="M33 38 Q30.5 50, 32.5 65" fill="none" stroke="#fff" strokeWidth="0.8" opacity="0.18" />
-                        <path d="M67 38 Q69.5 50, 67.5 65" fill="none" stroke="#fff" strokeWidth="0.8" opacity="0.18" />
+                        {/* Left side flowing locks (outside face) */}
+                        <path d="M33 34 Q28 48, 29.5 72 Q31.5 76, 34 73 Q35.5 68, 35.5 36 Z" fill={hairColor} />
+                        {/* Right side flowing locks (outside face) */}
+                        <path d="M67 34 Q72 48, 70.5 72 Q68.5 76, 66 73 Q64.5 68, 64.5 36 Z" fill={hairColor} />
+                        {/* Soft shine highlights */}
+                        <path d="M31.5 38 Q28.5 52, 31 68" fill="none" stroke="#fff" strokeWidth="0.8" opacity="0.22" />
+                        <path d="M68.5 38 Q71.5 52, 69 68" fill="none" stroke="#fff" strokeWidth="0.8" opacity="0.22" />
                       </motion.g>
                     </g>
                   );
